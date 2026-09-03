@@ -1,2 +1,3 @@
 Este es un archivo de prueba
 para la clase de GIT
+Mi primera pracctica de GIT
