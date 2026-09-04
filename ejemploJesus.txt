@@ -1,1 +1,30 @@
-Hola mundo
+Algoritmo Condicionales
+	
+	Definir PrecioBase, Edad, Resultado, Accidentes Como Real
+	
+	Escribir 'Ingrese su Edad:'
+	Leer Edad
+	
+	PrecioBase <- 1000
+	Escribir 'Cuantos Accidentes Ha Tenido:'  
+	Leer Accidentes
+	
+	Si Edad > 25 Y Edad < 65  Entonces
+		Resultado <- PrecioBase + (PrecioBase * 0.10)
+		
+	SiNo Si Edad > 65 Entonces
+			Resultado <- PrecioBase + (PrecioBase * 0.15)
+	SiNo Si Edad < 25 Entonces
+				Resultado <- PrecioBase + (PrecioBase * 0.25)
+			FinSi
+		FinSi
+	Fin Si
+	
+	Si Accidentes > 2 Entonces
+		Resultado <- Resultado + (Resultado * 0.20)
+		
+	FinSi
+	
+	Escribir 'El valor a Pagar es:' 
+	Escribir  Resultado
+FinAlgoritmo
