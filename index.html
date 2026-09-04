@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Git Interactivo | Comandos, Modos de Uso y Flujo</title>
+	<style>
+		:root {
+			--bg: #07111f;
+			--panel: rgba(10, 24, 44, 0.88);
+			--panel-strong: #0d1f38;
+			--panel-soft: #102a4b;
+			--line: rgba(151, 189, 255, 0.18);
+			--text: #eef4ff;
+			--muted: #9fb5d1;
+			--accent: #ff8f3d;
+			--accent-soft: #ffd1ae;
+			--secondary: #2dd4bf;
+			--secondary-soft: rgba(45, 212, 191, 0.18);
+			--danger: #ff6b6b;
+			--shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+			--radius: 22px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html {
+			scroll-behavior: smooth;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+			color: var(--text);
+			background:
+				radial-gradient(circle at top left, rgba(45, 212, 191, 0.15), transparent 28%),
+				radial-gradient(circle at top right, rgba(255, 143, 61, 0.18), transparent 25%),
+				linear-gradient(160deg, #030914 0%, #07111f 42%, #0d1f38 100%);
+			min-height: 100vh;
+		}
+
+		body::before {
+			content: "";
+			position: fixed;
+			inset: 0;
+			background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+			background-size: 32px 32px;
+			pointer-events: none;
+			mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 92%);
+		}
+
+		.page {
+			width: min(1180px, calc(100% - 32px));
+			margin: 0 auto;
+			padding: 28px 0 48px;
+			position: relative;
+			z-index: 1;
+		}
+
+		.hero,
+		.panel {
+			border: 1px solid var(--line);
+			background: var(--panel);
+			backdrop-filter: blur(14px);
+			box-shadow: var(--shadow);
+			border-radius: var(--radius);
+		}
+
+		.hero {
+			padding: 28px;
+			display: grid;
+			grid-template-columns: 1.4fr 0.95fr;
+			gap: 24px;
+			overflow: hidden;
+			position: relative;
+		}
+
+		.hero::after {
+			content: "";
+			position: absolute;
+			right: -60px;
+			top: -40px;
+			width: 220px;
+			height: 220px;
+			border-radius: 50%;
+			background: radial-gradient(circle, rgba(255, 143, 61, 0.28), transparent 70%);
+		}
+
+		.eyebrow {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 8px 12px;
+			border-radius: 999px;
+			background: rgba(45, 212, 191, 0.1);
+			border: 1px solid rgba(45, 212, 191, 0.18);
+			color: var(--secondary);
+			font-size: 0.9rem;
+			letter-spacing: 0.03em;
+		}
+
+		h1,
+		h2,
+		h3,
+		p {
+			margin-top: 0;
+		}
+
+		h1 {
+			font-size: clamp(2.2rem, 5vw, 4.2rem);
+			line-height: 0.96;
+			margin: 18px 0 16px;
+			max-width: 11ch;
+		}
+
+		.lead {
+			color: var(--muted);
+			font-size: 1.02rem;
+			line-height: 1.7;
+			max-width: 62ch;
+		}
+
+		.hero-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-top: 22px;
+		}
+
+		button,
+		.pill,
+		.chip,
+		.flow-step,
+		.mode-card,
+		.command-card {
+			transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+		}
+
+		.button,
+		button {
+			border: 0;
+			border-radius: 14px;
+			padding: 12px 18px;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.button-primary {
+			background: linear-gradient(135deg, var(--accent) 0%, #ffb16c 100%);
+			color: #1b120b;
+		}
+
+		.button-secondary {
+			background: rgba(255, 255, 255, 0.06);
+			color: var(--text);
+			border: 1px solid var(--line);
+		}
+
+		.button:hover,
+		button:hover,
+		.chip:hover,
+		.mode-card:hover,
+		.command-card:hover,
+		.flow-step:hover {
+			transform: translateY(-2px);
+		}
+
+		.hero-stats {
+			display: grid;
+			gap: 14px;
+			align-content: start;
+		}
+
+		.stat-box {
+			background: rgba(255, 255, 255, 0.04);
+			border: 1px solid var(--line);
+			border-radius: 18px;
+			padding: 18px;
+		}
+
+		.stat-box strong {
+			display: block;
+			font-size: 2rem;
+			margin-bottom: 8px;
+			color: var(--accent-soft);
+		}
+
+		.grid {
+			display: grid;
+			gap: 22px;
+			margin-top: 24px;
+		}
+
+		.layout-main {
+			grid-template-columns: 1.15fr 0.85fr;
+			align-items: start;
+		}
+
+		.panel {
+			padding: 24px;
+		}
+
+		.section-head {
+			display: flex;
+			justify-content: space-between;
+			align-items: start;
+			gap: 16px;
+			margin-bottom: 18px;
+		}
+
+		.section-head p {
+			color: var(--muted);
+			margin-bottom: 0;
+		}
+
+		.toolbar {
+			display: grid;
+			gap: 14px;
+			margin-bottom: 18px;
+		}
+
+		.search-box input {
+			width: 100%;
+			border: 1px solid var(--line);
+			background: rgba(255, 255, 255, 0.05);
+			color: var(--text);
+			border-radius: 14px;
+			padding: 14px 16px;
+			font-size: 1rem;
+			outline: none;
+		}
+
+		.chip-row {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.chip {
+			border: 1px solid var(--line);
+			background: rgba(255, 255, 255, 0.03);
+			color: var(--text);
+			padding: 10px 14px;
+			border-radius: 999px;
+			cursor: pointer;
+		}
+
+		.chip.active,
+		.mode-card.active,
+		.command-card.active,
+		.flow-step.active {
+			background: linear-gradient(135deg, rgba(255, 143, 61, 0.22), rgba(45, 212, 191, 0.18));
+			border-color: rgba(255, 209, 174, 0.65);
+			box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+		}
+
+		.command-list,
+		.mode-grid,
+		.flow-list {
+			display: grid;
+			gap: 14px;
+		}
+
+		.command-card,
+		.mode-card,
+		.flow-step {
+			border: 1px solid var(--line);
+			background: rgba(255, 255, 255, 0.03);
+			border-radius: 18px;
+			padding: 16px;
+			cursor: pointer;
+		}
+
+		.command-card code,
+		.terminal-command,
+		.detail-code,
+		.mini-code {
+			font-family: Consolas, Monaco, monospace;
+		}
+
+		.command-card code {
+			display: inline-block;
+			margin-bottom: 10px;
+			font-size: 1rem;
+			color: var(--accent-soft);
+		}
+
+		.meta {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			margin-top: 12px;
+		}
+
+		.pill {
+			padding: 7px 11px;
+			border-radius: 999px;
+			font-size: 0.84rem;
+			background: rgba(45, 212, 191, 0.11);
+			border: 1px solid rgba(45, 212, 191, 0.14);
+			color: var(--secondary);
+		}
+
+		.detail-panel {
+			display: grid;
+			gap: 16px;
+		}
+
+		.detail-block {
+			border: 1px solid var(--line);
+			border-radius: 18px;
+			background: rgba(255, 255, 255, 0.03);
+			padding: 18px;
+		}
+
+		.detail-code {
+			display: block;
+			padding: 14px;
+			border-radius: 14px;
+			background: #04101d;
+			border: 1px solid rgba(159, 181, 209, 0.16);
+			color: #b9ffe6;
+			font-size: 0.98rem;
+			overflow-x: auto;
+		}
+
+		.terminal {
+			border-radius: 20px;
+			background: #03101b;
+			border: 1px solid rgba(159, 181, 209, 0.18);
+			overflow: hidden;
+		}
+
+		.terminal-top {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 12px 14px;
+			background: rgba(255, 255, 255, 0.04);
+			border-bottom: 1px solid rgba(159, 181, 209, 0.16);
+		}
+
+		.dot {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+		}
+
+		.dot.red { background: #ff5f56; }
+		.dot.yellow { background: #ffbd2e; }
+		.dot.green { background: #27c93f; }
+
+		.terminal-body {
+			padding: 18px;
+			min-height: 240px;
+			display: grid;
+			gap: 12px;
+		}
+
+		.terminal-command {
+			color: #b9ffe6;
+			font-size: 1rem;
+		}
+
+		.terminal-output {
+			color: #9dc4ec;
+			white-space: pre-line;
+			line-height: 1.6;
+		}
+
+		.mode-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.flow-list {
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+		}
+
+		.flow-step small,
+		.mode-card small,
+		.command-card small {
+			color: var(--muted);
+		}
+
+		.helper {
+			color: var(--muted);
+			font-size: 0.95rem;
+		}
+
+		.summary-grid {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 14px;
+			margin-top: 16px;
+		}
+
+		.summary-card {
+			border: 1px solid var(--line);
+			border-radius: 18px;
+			background: rgba(255, 255, 255, 0.03);
+			padding: 16px;
+		}
+
+		.summary-card .mini-code {
+			display: inline-block;
+			margin-top: 10px;
+			color: var(--accent-soft);
+		}
+
+		.fade-in {
+			opacity: 0;
+			transform: translateY(16px);
+			animation: reveal 0.6s ease forwards;
+		}
+
+		.fade-in:nth-child(2) { animation-delay: 0.08s; }
+		.fade-in:nth-child(3) { animation-delay: 0.16s; }
+		.fade-in:nth-child(4) { animation-delay: 0.24s; }
+
+		@keyframes reveal {
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@media (max-width: 960px) {
+			.hero,
+			.layout-main {
+				grid-template-columns: 1fr;
+			}
+
+			.mode-grid,
+			.summary-grid,
+			.flow-list {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		@media (max-width: 640px) {
+			.page {
+				width: min(100% - 18px, 1180px);
+				padding-top: 18px;
+			}
+
+			.hero,
+			.panel {
+				padding: 18px;
+			}
+
+			h1 {
+				max-width: none;
+			}
+
+			.hero-actions,
+			.chip-row {
+				flex-direction: column;
+			}
+
+			.button,
+			button,
+			.chip {
+				width: 100%;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+		<section class="hero fade-in">
+			<div>
+				<span class="eyebrow">Guia viva de Git</span>
+				<h1>Aprende Git tocando cada paso</h1>
+				<p class="lead">
+					Explora comandos, cambia entre modos de uso, sigue el flujo real de trabajo y simula en pantalla lo que pasa cuando usas Git en proyectos individuales o colaborativos.
+				</p>
+				<div class="hero-actions">
+					<button class="button button-primary" id="jumpCommands">Explorar comandos</button>
+					<button class="button button-secondary" id="runTour">Recorrido guiado</button>
+				</div>
+			</div>
+
+			<div class="hero-stats">
+				<div class="stat-box fade-in">
+					<strong id="commandCount">12</strong>
+					<span>comandos esenciales listos para filtrar, comparar y simular.</span>
+				</div>
+				<div class="stat-box fade-in">
+					<strong>4</strong>
+					<span>modos de uso para trabajo basico, ramas, colaboracion y recuperacion.</span>
+				</div>
+				<div class="stat-box fade-in">
+					<strong>5</strong>
+					<span>pasos de user flow para pasar de idea a repositorio sincronizado.</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="grid layout-main" id="commandsSection">
+			<div class="panel fade-in">
+				<div class="section-head">
+					<div>
+						<h2>Centro interactivo de comandos</h2>
+						<p>Busca, filtra por categoria y abre cada comando para ver cuando usarlo.</p>
+					</div>
+					<span class="pill" id="visibleCounter">12 visibles</span>
+				</div>
+
+				<div class="toolbar">
+					<label class="search-box">
+						<input type="search" id="searchInput" placeholder="Busca: commit, branch, pull, stash...">
+					</label>
+
+					<div class="chip-row" id="filterChips"></div>
+				</div>
+
+				<div class="command-list" id="commandList"></div>
+			</div>
+
+			<aside class="panel fade-in">
+				<div class="section-head">
+					<div>
+						<h2>Detalle del comando</h2>
+						<p>La tarjeta activa actualiza esta zona con sintaxis, objetivo y ejemplo.</p>
+					</div>
+				</div>
+
+				<div class="detail-panel">
+					<div class="detail-block">
+						<h3 id="detailTitle">git status</h3>
+						<p id="detailDescription" class="helper"></p>
+						<span class="detail-code" id="detailCode"></span>
+					</div>
+
+					<div class="detail-block">
+						<h3>Uso recomendado</h3>
+						<p id="detailUsage" class="helper"></p>
+					</div>
+
+					<div class="detail-block">
+						<h3>Simulacion rapida</h3>
+						<button class="button button-primary" id="simulateButton">Simular comando</button>
+					</div>
+				</div>
+			</aside>
+		</section>
+
+		<section class="panel fade-in" style="margin-top: 24px;">
+			<div class="section-head">
+				<div>
+					<h2>Modos de uso</h2>
+					<p>Selecciona un modo y observa la secuencia recomendada de comandos y decisiones.</p>
+				</div>
+				<span class="pill" id="activeModeLabel">Modo: Basico</span>
+			</div>
+
+			<div class="mode-grid" id="modeGrid"></div>
+
+			<div class="summary-grid" id="modeSummary"></div>
+		</section>
+
+		<section class="grid layout-main" style="margin-top: 24px;">
+			<div class="panel fade-in">
+				<div class="section-head">
+					<div>
+						<h2>User flow de Git</h2>
+						<p>Haz clic en cada etapa para ver que comando suele aparecer en ese momento.</p>
+					</div>
+				</div>
+
+				<div class="flow-list" id="flowList"></div>
+			</div>
+
+			<div class="panel fade-in">
+				<div class="section-head">
+					<div>
+						<h2>Terminal visual</h2>
+						<p>La simulacion cambia segun el comando, el modo o el paso seleccionado.</p>
+					</div>
+				</div>
+
+				<div class="terminal">
+					<div class="terminal-top">
+						<span class="dot red"></span>
+						<span class="dot yellow"></span>
+						<span class="dot green"></span>
+					</div>
+					<div class="terminal-body">
+						<div class="terminal-command" id="terminalCommand">$ git status</div>
+						<div class="terminal-output" id="terminalOutput"></div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<script>
+		const commands = [
+			{
+				id: "status",
+				name: "git status",
+				syntax: "git status",
+				category: "Consulta",
+				description: "Muestra el estado actual del repositorio, archivos modificados y cambios en staging.",
+				usage: "Usalo antes de agregar, confirmar o subir cambios. Evita trabajar a ciegas.",
+				output: "On branch main\nChanges not staged for commit:\n  modified: index.html\n\nno changes added to commit"
+			},
+			{
+				id: "init",
+				name: "git init",
+				syntax: "git init",
+				category: "Inicio",
+				description: "Crea un repositorio Git nuevo dentro de la carpeta actual.",
+				usage: "Ideal cuando comienzas un proyecto desde cero y aun no existe control de versiones.",
+				output: "Initialized empty Git repository in ./mi-proyecto/.git/"
+			},
+			{
+				id: "clone",
+				name: "git clone",
+				syntax: "git clone <url>",
+				category: "Inicio",
+				description: "Descarga un repositorio remoto completo en tu equipo.",
+				usage: "Es el punto de entrada cuando el proyecto ya existe en GitHub, GitLab o Bitbucket.",
+				output: "Cloning into 'curso-git'...\nremote: Enumerating objects: 48, done.\nReceiving objects: 100% (48/48), done."
+			},
+			{
+				id: "add",
+				name: "git add",
+				syntax: "git add .",
+				category: "Preparacion",
+				description: "Envía cambios al area de staging para incluirlos en el proximo commit.",
+				usage: "Sirve para decidir exactamente que version de tus archivos vas a confirmar.",
+				output: "$ git add .\nArchivos preparados para el siguiente commit."
+			},
+			{
+				id: "commit",
+				name: "git commit",
+				syntax: "git commit -m \"mensaje claro\"",
+				category: "Preparacion",
+				description: "Guarda una fotografia del proyecto con un mensaje que explica el cambio.",
+				usage: "Haz commits pequenos, coherentes y faciles de revertir o revisar.",
+				output: "[main 8f3a2c1] agrega pagina interactiva de git\n 1 file changed, 420 insertions(+)"
+			},
+			{
+				id: "branch",
+				name: "git branch",
+				syntax: "git branch nueva-funcion",
+				category: "Ramas",
+				description: "Crea o lista ramas para aislar trabajo sin tocar la linea principal.",
+				usage: "Util cuando necesitas desarrollar una funcionalidad o una correccion sin riesgo.",
+				output: "* main\n  nueva-funcion"
+			},
+			{
+				id: "switch",
+				name: "git switch",
+				syntax: "git switch nueva-funcion",
+				category: "Ramas",
+				description: "Cambia a otra rama de trabajo de forma directa y legible.",
+				usage: "Usalo despues de crear una rama o para moverte entre contextos del proyecto.",
+				output: "Switched to branch 'nueva-funcion'"
+			},
+			{
+				id: "merge",
+				name: "git merge",
+				syntax: "git merge nueva-funcion",
+				category: "Ramas",
+				description: "Integra los cambios de una rama en la rama actual.",
+				usage: "Se usa cuando una tarea ya fue validada y quieres unirla a main o develop.",
+				output: "Updating 7fd12ab..91cf414\nFast-forward\n index.html | 42 ++++++++++++++++++++++++++++++++"
+			},
+			{
+				id: "pull",
+				name: "git pull",
+				syntax: "git pull origin main",
+				category: "Remoto",
+				description: "Trae cambios del repositorio remoto y los integra en tu rama local.",
+				usage: "Hazlo antes de empezar a editar para reducir conflictos y mantenerte al dia.",
+				output: "From origin\n * branch            main       -> FETCH_HEAD\nAlready up to date."
+			},
+			{
+				id: "push",
+				name: "git push",
+				syntax: "git push origin main",
+				category: "Remoto",
+				description: "Publica tus commits locales en el repositorio remoto.",
+				usage: "Se usa despues de confirmar cambios y cuando quieres compartir avance o respaldo.",
+				output: "Enumerating objects: 9, done.\nWriting objects: 100% (9/9), 1.09 KiB | done.\nTo origin\n   8f3a2c1..ce92f7e  main -> main"
+			},
+			{
+				id: "log",
+				name: "git log",
+				syntax: "git log --oneline --graph --decorate",
+				category: "Consulta",
+				description: "Permite revisar el historial de commits y la forma en que evoluciono el proyecto.",
+				usage: "Muy util para auditar cambios, entender ramas y recuperar contexto del trabajo.",
+				output: "* ce92f7e (HEAD -> main) mejora seccion de comandos\n* 8f3a2c1 agrega pagina interactiva\n* 3b2de11 inicio del proyecto"
+			},
+			{
+				id: "stash",
+				name: "git stash",
+				syntax: "git stash push -m \"cambios temporales\"",
+				category: "Recuperacion",
+				description: "Guarda cambios sin commit para limpiar el directorio de trabajo temporalmente.",
+				usage: "Practico cuando debes cambiar de rama rapido sin perder trabajo incompleto.",
+				output: "Saved working directory and index state On main: cambios temporales"
+			}
+		];
+
+		const modes = [
+			{
+				id: "basico",
+				title: "Basico",
+				summary: "Para iniciar, editar y confirmar cambios propios.",
+				steps: ["git init", "git status", "git add .", "git commit -m \"mensaje\""],
+				cue: "Aprendes el ciclo minimo para versionar un proyecto local."
+			},
+			{
+				id: "ramas",
+				title: "Ramas",
+				summary: "Para experimentar sin comprometer la rama principal.",
+				steps: ["git branch feature-ui", "git switch feature-ui", "git commit -m \"avance\"", "git merge feature-ui"],
+				cue: "Permite aislar funcionalidades y reducir errores en main."
+			},
+			{
+				id: "colaboracion",
+				title: "Colaboracion",
+				summary: "Para mantenerte sincronizado con un equipo o remoto.",
+				steps: ["git pull origin main", "git status", "git add .", "git commit -m \"cambio\"", "git push origin main"],
+				cue: "Ayuda a evitar conflictos y mantiene un flujo compartido ordenado."
+			},
+			{
+				id: "recuperacion",
+				title: "Recuperacion",
+				summary: "Para pausar trabajo o revisar historial antes de seguir.",
+				steps: ["git stash", "git switch main", "git pull origin main", "git log --oneline --graph --decorate"],
+				cue: "Es util cuando debes cambiar rapido de contexto sin perder avances."
+			}
+		];
+
+		const flow = [
+			{
+				id: "idea",
+				title: "1. Preparar",
+				text: "Creas o descargas el repositorio y verificas el punto de partida.",
+				command: "git init o git clone <url>",
+				output: "Repositorio listo. El siguiente paso es revisar el estado y comenzar a trabajar."
+			},
+			{
+				id: "edit",
+				title: "2. Editar",
+				text: "Modificas archivos y revisas constantemente que ha cambiado.",
+				command: "git status",
+				output: "Aparecen archivos modificados. Todavia no forman parte del proximo commit."
+			},
+			{
+				id: "stage",
+				title: "3. Preparar commit",
+				text: "Seleccionas los cambios que quieres confirmar en esta iteracion.",
+				command: "git add .",
+				output: "Los archivos pasan al area de staging. Ya estan listos para consolidarse."
+			},
+			{
+				id: "commit-flow",
+				title: "4. Confirmar",
+				text: "Creas una fotografia del trabajo con un mensaje claro y rastreable.",
+				command: "git commit -m \"describe el cambio\"",
+				output: "El historial ahora registra una nueva version del proyecto."
+			},
+			{
+				id: "sync",
+				title: "5. Sincronizar",
+				text: "Compartes el avance o traes novedades del equipo para continuar.",
+				command: "git pull origin main / git push origin main",
+				output: "Tu rama local y el remoto quedan alineados para seguir trabajando."
+			}
+		];
+
+		const categories = ["Todos", ...new Set(commands.map((command) => command.category))];
+
+		const commandList = document.getElementById("commandList");
+		const filterChips = document.getElementById("filterChips");
+		const searchInput = document.getElementById("searchInput");
+		const visibleCounter = document.getElementById("visibleCounter");
+		const detailTitle = document.getElementById("detailTitle");
+		const detailDescription = document.getElementById("detailDescription");
+		const detailCode = document.getElementById("detailCode");
+		const detailUsage = document.getElementById("detailUsage");
+		const simulateButton = document.getElementById("simulateButton");
+		const terminalCommand = document.getElementById("terminalCommand");
+		const terminalOutput = document.getElementById("terminalOutput");
+		const modeGrid = document.getElementById("modeGrid");
+		const modeSummary = document.getElementById("modeSummary");
+		const activeModeLabel = document.getElementById("activeModeLabel");
+		const flowList = document.getElementById("flowList");
+		const jumpCommands = document.getElementById("jumpCommands");
+		const runTour = document.getElementById("runTour");
+		const commandCount = document.getElementById("commandCount");
+
+		let activeCategory = "Todos";
+		let activeCommandId = "status";
+		let activeModeId = "basico";
+		let activeFlowId = "edit";
+		let tourIndex = 0;
+
+		commandCount.textContent = String(commands.length);
+
+		function renderChips() {
+			filterChips.innerHTML = categories.map((category) => `
+				<button class="chip ${category === activeCategory ? "active" : ""}" data-category="${category}">${category}</button>
+			`).join("");
+
+			filterChips.querySelectorAll(".chip").forEach((chip) => {
+				chip.addEventListener("click", () => {
+					activeCategory = chip.dataset.category;
+					renderChips();
+					renderCommands();
+				});
+			});
+		}
+
+		function getFilteredCommands() {
+			const query = searchInput.value.trim().toLowerCase();
+			return commands.filter((command) => {
+				const matchesCategory = activeCategory === "Todos" || command.category === activeCategory;
+				const matchesQuery = [command.name, command.description, command.usage, command.category].join(" ").toLowerCase().includes(query);
+				return matchesCategory && matchesQuery;
+			});
+		}
+
+		function renderCommands() {
+			const filtered = getFilteredCommands();
+
+			if (!filtered.some((command) => command.id === activeCommandId)) {
+				activeCommandId = filtered[0] ? filtered[0].id : commands[0].id;
+			}
+
+			commandList.innerHTML = filtered.length ? filtered.map((command) => `
+				<article class="command-card ${command.id === activeCommandId ? "active" : ""}" data-command-id="${command.id}">
+					<code>${command.name}</code>
+					<h3>${command.category}</h3>
+					<small>${command.description}</small>
+					<div class="meta">
+						<span class="pill">${command.category}</span>
+						<span class="pill">Interaccion</span>
+					</div>
+				</article>
+			`).join("") : `
+				<div class="detail-block">
+					<h3>Sin resultados</h3>
+					<p class="helper">Cambia el filtro o escribe otra palabra para volver a cargar comandos.</p>
+				</div>
+			`;
+
+			visibleCounter.textContent = `${filtered.length} visibles`;
+
+			commandList.querySelectorAll(".command-card").forEach((card) => {
+				card.addEventListener("click", () => {
+					activeCommandId = card.dataset.commandId;
+					renderCommands();
+					updateCommandDetail();
+				});
+			});
+
+			updateCommandDetail();
+		}
+
+		function updateCommandDetail() {
+			const activeCommand = commands.find((command) => command.id === activeCommandId) || commands[0];
+			detailTitle.textContent = activeCommand.name;
+			detailDescription.textContent = activeCommand.description;
+			detailCode.textContent = activeCommand.syntax;
+			detailUsage.textContent = activeCommand.usage;
+			simulateTerminal(activeCommand.syntax, activeCommand.output);
+		}
+
+		function simulateTerminal(commandText, outputText) {
+			terminalCommand.textContent = `$ ${commandText}`;
+			terminalOutput.textContent = outputText;
+		}
+
+		function renderModes() {
+			modeGrid.innerHTML = modes.map((mode) => `
+				<article class="mode-card ${mode.id === activeModeId ? "active" : ""}" data-mode-id="${mode.id}">
+					<h3>${mode.title}</h3>
+					<p class="helper">${mode.summary}</p>
+					<small>${mode.cue}</small>
+				</article>
+			`).join("");
+
+			modeGrid.querySelectorAll(".mode-card").forEach((card) => {
+				card.addEventListener("click", () => {
+					activeModeId = card.dataset.modeId;
+					renderModes();
+					renderModeSummary();
+				});
+			});
+
+			renderModeSummary();
+		}
+
+		function renderModeSummary() {
+			const activeMode = modes.find((mode) => mode.id === activeModeId) || modes[0];
+			activeModeLabel.textContent = `Modo: ${activeMode.title}`;
+			modeSummary.innerHTML = activeMode.steps.map((step, index) => `
+				<div class="summary-card">
+					<strong>Paso ${index + 1}</strong>
+					<div class="mini-code">${step}</div>
+				</div>
+			`).join("");
+			simulateTerminal(activeMode.steps[0], `${activeMode.cue}\n\nSecuencia sugerida:\n- ${activeMode.steps.join("\n- ")}`);
+		}
+
+		function renderFlow() {
+			flowList.innerHTML = flow.map((step) => `
+				<article class="flow-step ${step.id === activeFlowId ? "active" : ""}" data-flow-id="${step.id}">
+					<h3>${step.title}</h3>
+					<small>${step.text}</small>
+				</article>
+			`).join("");
+
+			flowList.querySelectorAll(".flow-step").forEach((item) => {
+				item.addEventListener("click", () => {
+					activeFlowId = item.dataset.flowId;
+					renderFlow();
+					updateFlowTerminal();
+				});
+			});
+
+			updateFlowTerminal();
+		}
+
+		function updateFlowTerminal() {
+			const step = flow.find((entry) => entry.id === activeFlowId) || flow[0];
+			simulateTerminal(step.command, `${step.text}\n\n${step.output}`);
+		}
+
+		simulateButton.addEventListener("click", () => {
+			const command = commands.find((item) => item.id === activeCommandId) || commands[0];
+			simulateTerminal(command.syntax, command.output);
+		});
+
+		searchInput.addEventListener("input", renderCommands);
+
+		jumpCommands.addEventListener("click", () => {
+			document.getElementById("commandsSection").scrollIntoView({ behavior: "smooth" });
+			searchInput.focus();
+		});
+
+		runTour.addEventListener("click", () => {
+			const route = [
+				() => {
+					activeCategory = "Inicio";
+					renderChips();
+					renderCommands();
+					activeCommandId = "clone";
+					renderCommands();
+				},
+				() => {
+					activeModeId = "basico";
+					renderModes();
+				},
+				() => {
+					activeFlowId = "stage";
+					renderFlow();
+				},
+				() => {
+					activeModeId = "colaboracion";
+					renderModes();
+				}
+			];
+
+			route[tourIndex % route.length]();
+			tourIndex += 1;
+		});
+
+		renderChips();
+		renderCommands();
+		renderModes();
+		renderFlow();
+	</script>
+</body>
+</html>
